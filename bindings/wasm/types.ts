@@ -216,7 +216,7 @@ export interface SelectedView {
 // };
 
 // type ClipboardData = Record<string, Record <string, ClipboardCell>>;
-type ClipboardData = Map<number, Map <number, ClipboardCell>>;
+type ClipboardData = Map<number, Map<number, ClipboardCell>>;
 
 export interface ClipboardCell {
   text: string;
@@ -233,4 +233,15 @@ export interface DefinedName {
   name: string;
   scope?: number;
   formula: string;
+}
+
+export interface CellData {
+  value: string;
+  formula: string | null;
+}
+
+export interface SheetData {
+  [rowIndex: number]: {
+    [columnIndex: number]: CellData;
+  };
 }

@@ -672,4 +672,48 @@ impl Model {
             .delete_defined_name(name, scope)
             .map_err(|e| to_js_error(e.to_string()))
     }
+
+    #[wasm_bindgen(js_name = "getWorkbookData")]
+    pub fn get_workbook_data(&self) -> Result<JsValue, JsError> {
+        use std::collections::HashMap;
+
+        #[derive(Serialize)]
+        struct CellData {
+            value: String,
+            formula: Option<String>,
+        }
+
+        type SheetData = HashMap<i32, HashMap<i32, CellData>>;
+        let mut workbook_data: Vec<SheetData> = Vec::new();
+
+        for (index, sheet) in self.model.get_model().workbook.worksheets.iter().enumerate() {
+            let mut sheet_data = HashMap::new();
+
+            for (&row, row_data) in &sheet.sheet_data {
+                let mut column_data = HashMap::new();
+                
+                for (&column, _) in row_data {
+                    // Get formatted value
+                    let value = match self.get_formatted_cell_value(index as u32, row, column) {
+                        Ok(v) => v,
+                        Err(_) => String::new(),
+                    };
+                    
+                    // Get formula if it exists
+                    let formula = match self.get_cell_content(index as u32, row, column) {
+                        Ok(content) if content.starts_with('=') => Some(content),
+                        _ => None,
+                    };
+                    
+                    column_data.insert(column, CellData { value, formula });
+                }
+                
+                sheet_data.insert(row, column_data);
+            }
+            
+            workbook_data.push(sheet_data);
+        }
+        
+        serde_wasm_bindgen::to_value(&workbook_data).map_err(|e| to_js_error(e.to_string()))
+    }
 }
