@@ -240,8 +240,9 @@ export interface CellData {
   formula: string | null;
 }
 
-export interface SheetData {
-  [rowIndex: number]: {
-    [columnIndex: number]: CellData;
-  };
-}
+/** 
+ * Represents all cell data in a worksheet.
+ * First Map key is row index (1-based),
+ * Second Map key is column index (1-based)
+ */
+export type SheetData = Map<number, Map<number, CellData>>;

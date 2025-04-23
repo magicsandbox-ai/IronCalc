@@ -12,7 +12,7 @@ readme = "README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-zip = "0.6"
+zip = { version = "0.6", default-features = false }
 roxmltree = "0.19"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -27,6 +27,10 @@ bitcode = "0.6.0"
 
 [dev-dependencies]
 uuid = { version = "1.2.2", features = ["serde", "v4"] }
+
+[features]
+default = ["zip/default"]
+wasm = ["zip/deflate"]
 
 [lib]
 name = "ironcalc"
