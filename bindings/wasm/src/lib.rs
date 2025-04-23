@@ -7,8 +7,10 @@ use wasm_bindgen::{
 use ironcalc_base::{
     expressions::{lexer::util::get_tokens as tokenizer, types::Area, utils::number_to_column},
     types::{CellType, Style},
-    BorderArea, ClipboardData, UserModel as BaseModel,
+    BorderArea, ClipboardData, UserModel as BaseModel, Model as BaseInternalModel,
 };
+use ironcalc::export::save_xlsx_to_writer;
+use ironcalc::import::load_from_xlsx_bytes;
 
 fn to_js_error(error: String) -> JsError {
     JsError::new(&error.to_string())
@@ -715,5 +717,23 @@ impl Model {
         }
         
         serde_wasm_bindgen::to_value(&workbook_data).map_err(|e| to_js_error(e.to_string()))
+    }
+
+    #[wasm_bindgen(js_name = "fromXlsx")]
+    pub fn from_xlsx(bytes: &[u8], name: &str, locale: &str, tz: &str) -> Result<Model, JsError> {
+        let workbook = load_from_xlsx_bytes(bytes, name, locale, tz)
+            .map_err(|e| to_js_error(e.to_string()))?;
+        let internal_model = BaseInternalModel::from_workbook(workbook)
+            .map_err(|e| to_js_error(e.to_string()))?;
+        let base_model = BaseModel::from_model(internal_model);
+        Ok(Model { model: base_model })
+    }
+
+    #[wasm_bindgen(js_name = "toXlsx")]
+    pub fn to_xlsx(&self) -> Result<Vec<u8>, JsError> {
+        let mut cursor = std::io::Cursor::new(Vec::new());
+        save_xlsx_to_writer(self.model.get_model(), &mut cursor)
+            .map_err(|e| JsError::new(&e.to_string()))?;
+        Ok(cursor.into_inner())
     }
 }
