@@ -374,6 +374,27 @@ impl UserModel {
         q
     }
 
+    /// Returns a human-readable debug string of the send queue contents.
+    /// This is only meant for debugging purposes.
+    pub fn debug_flush_send_queue(&mut self) -> String {
+      let queue = self.flush_send_queue();
+      match bitcode::decode::<Vec<QueueDiffs>>(&queue) {
+          Ok(diffs) => {
+              let mut output = String::new();
+              for (i, diff) in diffs.iter().enumerate() {
+                  output.push_str(&format!("Diff #{}\n", i + 1));
+                  output.push_str(&format!("Type: {:?}\n", diff.r#type));
+                  for (j, change) in diff.list.iter().enumerate() {
+                      output.push_str(&format!("  Change #{}: {:?}\n", j + 1, change));
+                  }
+                  output.push('\n');
+              }
+              output
+          }
+          Err(e) => format!("Error decoding queue: {}", e)
+      }
+    }
+
     /// This are external diffs that need to be applied to the model
     ///
     /// This is used together with [flush_send_queue](UserModel::flush_send_queue) to keep two remote models in sync

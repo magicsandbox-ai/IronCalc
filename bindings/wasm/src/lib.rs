@@ -94,6 +94,11 @@ impl Model {
         self.model.flush_send_queue()
     }
 
+    #[wasm_bindgen(js_name = "debugFlushSendQueue")]
+    pub fn debug_flush_send_queue(&mut self) -> String {
+        self.model.debug_flush_send_queue()
+    }
+
     #[wasm_bindgen(js_name = "applyExternalDiffs")]
     pub fn apply_external_diffs(&mut self, diffs: &[u8]) -> Result<(), JsError> {
         self.model.apply_external_diffs(diffs).map_err(to_js_error)
@@ -707,10 +712,14 @@ impl Model {
                         _ => None,
                     };
                     
-                    column_data.insert(column, CellData { value, formula });
+                    if !value.is_empty() || formula.is_some() {
+                        column_data.insert(column, CellData { value, formula });
+                    }
                 }
                 
-                sheet_data.insert(row, column_data);
+                if !column_data.is_empty() {
+                    sheet_data.insert(row, column_data);
+                }
             }
             
             workbook_data.push(sheet_data);
