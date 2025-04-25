@@ -95,7 +95,7 @@ impl Model {
     }
 
     #[wasm_bindgen(js_name = "debugFlushSendQueue")]
-    pub fn debug_flush_send_queue(&mut self) -> String {
+    pub fn debug_flush_send_queue(&mut self) -> Vec<String> {
         self.model.debug_flush_send_queue()
     }
 
