@@ -94,9 +94,9 @@ impl Model {
         self.model.flush_send_queue()
     }
 
-    #[wasm_bindgen(js_name = "debugFlushSendQueue")]
-    pub fn debug_flush_send_queue(&mut self) -> Vec<String> {
-        self.model.debug_flush_send_queue()
+    #[wasm_bindgen(js_name = "flushSendQueueCount")]
+    pub fn flush_send_queue_count(&mut self) -> usize {
+        self.model.flush_send_queue_count()
     }
 
     #[wasm_bindgen(js_name = "applyExternalDiffs")]
@@ -683,48 +683,43 @@ impl Model {
     #[wasm_bindgen(js_name = "getWorkbookData")]
     pub fn get_workbook_data(&self) -> Result<JsValue, JsError> {
         use std::collections::HashMap;
-
         #[derive(Serialize)]
         struct CellData {
             value: String,
             formula: Option<String>,
+            error: Option<String>,
         }
-
         type SheetData = HashMap<i32, HashMap<i32, CellData>>;
         let mut workbook_data: Vec<SheetData> = Vec::new();
-
         for (index, sheet) in self.model.get_model().workbook.worksheets.iter().enumerate() {
             let mut sheet_data = HashMap::new();
-
             for (&row, row_data) in &sheet.sheet_data {
                 let mut column_data = HashMap::new();
-                
-                for (&column, _) in row_data {
+                for (&column, cell) in row_data {
                     // Get formatted value
                     let value = match self.get_formatted_cell_value(index as u32, row, column) {
                         Ok(v) => v,
                         Err(_) => String::new(),
                     };
-                    
                     // Get formula if it exists
                     let formula = match self.get_cell_content(index as u32, row, column) {
                         Ok(content) if content.starts_with('=') => Some(content),
                         _ => None,
                     };
-                    
-                    if !value.is_empty() || formula.is_some() {
-                        column_data.insert(column, CellData { value, formula });
+                    let error = {
+                      let e = cell.get_error_message();
+                      if e.is_empty() { None } else { Some(e) }
+                    };
+                    if !value.is_empty() || formula.is_some() || error.is_some() {
+                        column_data.insert(column, CellData { value, formula, error });
                     }
                 }
-                
                 if !column_data.is_empty() {
                     sheet_data.insert(row, column_data);
                 }
             }
-            
             workbook_data.push(sheet_data);
         }
-        
         serde_wasm_bindgen::to_value(&workbook_data).map_err(|e| to_js_error(e.to_string()))
     }
 

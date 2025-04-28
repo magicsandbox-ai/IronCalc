@@ -175,4 +175,11 @@ impl Cell {
             CellValue::Number(value) => format_number(value),
         }
     }
+
+    pub fn get_error_message(&self) -> String {
+      match self {
+            Cell::CellFormulaError { m, .. } => m.clone(),
+            _ => "".to_string(),
+        }
+    }
 }

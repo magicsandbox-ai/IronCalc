@@ -237,10 +237,11 @@ export interface DefinedName {
 
 export interface CellData {
   value: string;
-  formula: string | null;
+  formula?: string;
+  error?: string;
 }
 
-/** 
+/**
  * Represents all cell data in a worksheet.
  * First Map key is row index (1-based),
  * Second Map key is column index (1-based)
